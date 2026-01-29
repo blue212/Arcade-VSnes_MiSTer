@@ -1,0 +1,5 @@
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "DPCM_TABLE.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "LENGTH_TABLE.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "MOS6502_WBCD.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "NOISE_TABLE.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "RP2A03.v"]

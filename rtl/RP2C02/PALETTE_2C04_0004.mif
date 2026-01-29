@@ -1,0 +1,88 @@
+-- Copyright (C) 1991-2013 Altera Corporation
+-- Your use of Altera Corporation's design tools, logic functions 
+-- and other software and tools, and its AMPP partner logic 
+-- functions, and any output files from any of the foregoing 
+-- (including device programming or simulation files), and any 
+-- associated documentation or information are expressly subject 
+-- to the terms and conditions of the Altera Program License 
+-- Subscription Agreement, Altera MegaCore Function License 
+-- Agreement, or other applicable license agreement, including, 
+-- without limitation, that your use is for the sole purpose of 
+-- programming logic devices manufactured by Altera and sold by 
+-- Altera or its authorized distributors.  Please refer to the 
+-- applicable agreement for further details.
+
+-- Quartus II generated Memory Initialization File (.mif)
+
+WIDTH=24;
+DEPTH=64;
+
+ADDRESS_RADIX=HEX;
+DATA_RADIX=HEX;
+
+CONTENT BEGIN
+	000  :   916E00;
+	001  :   6E4EDC;
+	002  :   249293;
+	003  :   DBDA00;
+	004  :   000000;
+	005  :   FBB9B7;
+	006  :   0C2593;
+	007  :   D77000;
+	008  :   B8B8B8;
+	009  :   6B2200;
+	00A  :   3FFB00;
+	00B  :   05086E;
+	00C  :   FDDB92;
+	00D  :   FEFD00;
+	00E  :   209100;
+	00F  :   BBFC45;
+	010  :   FA77FF;
+	011  :   450400;
+	012  :   1F4FFF;
+	013  :   FB98FF;
+	014  :   000000;
+	015  :   474747;
+	016  :   B32900;
+	017  :   FA9500;
+	018  :   D9B76D;
+	019  :   2CB56D;
+	01A  :   9596FF;
+	01B  :   2E9100;
+	01C  :   8F156E;
+	01D  :   000000;
+	01E  :   9BFC6C;
+	01F  :   76B8FF;
+	020  :   B31B6E;
+	021  :   166C1E;
+	022  :   904900;
+	023  :   151CDC;
+	024  :   9128FF;
+	025  :   B42CFF;
+	026  :   6E6E6E;
+	027  :   F82993;
+	028  :   0C4747;
+	029  :   DCDCDC;
+	02A  :   2170DC;
+	02B  :   0B4600;
+	02C  :   1F1F1F;
+	02D  :   FEFD6C;
+	02E  :   939393;
+	02F  :   F934FF;
+	030  :   FCBBFF;
+	031  :   FFFFFF;
+	032  :   6C4800;
+	033  :   F82400;
+	034  :   FCDB00;
+	035  :   60FDDC;
+	036  :   FFFFFF;
+	037  :   99DBFF;
+	038  :   000000;
+	039  :   FBB800;
+	03A  :   D875FF;
+	03B  :   BBDCFF;
+	03C  :   76D900;
+	03D  :   DABAFF;
+	03E  :   46FDFF;
+	03F  :   224600;
+END;
