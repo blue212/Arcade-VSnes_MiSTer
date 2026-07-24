@@ -219,19 +219,23 @@ localparam CONF_STR = {
 	"-;",
 	//"O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	//"O[2],TV Mode,NTSC,PAL;",	
-	//"O[5:3],Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",	
-	"O[6],Palette Overide,No,Yes;",	
+	//"O[5:3],Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+	"O[6],Palette Override,No,Yes;",	
 	"h0O[9:7],Palette,2C02,2C03,2C04-0000,2C04-0001,2C04-0002,2C04-0003,2C04-0004,2C05-99;",
 	"O[12],Swap Screen,No,Yes;",
 	"O[15],System Type,Uni,Dual;",
 	"h1O[17:16],Split Screen,No,Vert,Horz;",
 	"h2O[11],Divider,No,Yes;",	
-	"-;",	
+	"-;",
 	"O[18],Shared RAM,Yes,No;",
-	"O[20:19],Audio Mix,NES1,NES2,Both;",	
+	"O[20:19],Audio Mix,NES1,NES2,Both;",
+	"-;",	
+	"T[21],Save NVRAM;",
+	"R[23],Load NVRAM;",	
+	"O[22],Autosave,Off,On;",		
 	"-;",
 	"DIP;",	
-	"-;",	 
+	"-;",
 	"T[0],Reset;",
 	"R[0],Reset and close OSD;",
 	"J1,A,B,Start3(4),Start1(2),Coin,Service;",
@@ -256,16 +260,21 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	.HPS_BUS(HPS_BUS),
 	.EXT_BUS(),
 	.gamma_bus(),
-	
+
 	.ioctl_download(ioctl_download),
 	.ioctl_addr(ioctl_addr),
 	.ioctl_wr(ioctl_wr),
 	.ioctl_dout(ioctl_dout),
 	.ioctl_wait(ioctl_wait),
 	.ioctl_index(ioctl_index),
+	
+   .ioctl_upload_req(NVram_save),
+   .ioctl_upload_index(4),//NVram_idx),
+   .ioctl_upload(ioctl_upload),
+   .ioctl_din(ioctl_din),
 
 	.forced_scandoubler(forced_scandoubler),
-	
+
 	.joystick_0(joyA),
 	.joystick_1(joyB),
 	.joystick_2(joyC),
@@ -279,11 +288,13 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 );
 
 wire         ioctl_download;
+wire         ioctl_upload;
 wire [24:0]  ioctl_addr;
 wire         ioctl_wait;
 wire         ioctl_wr; 
 wire [15:0]  ioctl_index;  
 wire [7:0]   ioctl_dout;
+wire [7:0]   ioctl_din;
 
 ///////////////////////   CLOCKS   ///////////////////////////////
 
@@ -647,28 +658,85 @@ end
 wire [10:0]NVramAddress1,NVramAddress2;	 
 wire [7:0]NVDataOut1,NVDataOut2;
 wire [7:0]NVDataq,NVDataq2;
+wire [7:0]NVram1q,NVram2q;
 wire NVcs1,NVcs2;
+
+wire [7:0]NVtempq;
+reg [11:0]NVtempAddress = 0;
+reg [11:0]NVtempAddress2 = 0;
+reg [11:0]NVtempAddress3 = 0;
 
 //74ls157 at 5j 5k 6j 6k - only primary nes controls the selector  
 //74ls245 3k 8k - simplified for now
-	 
+
 //2kB RAM for NVRAM () 8L - shared between both systems
-ram2k nvram (
-	.address(~OUT1[1] ? NVramAddress2 : NVramAddress1),
+ram2kDP nvram (
+	.address_a(~OUT1[1] ? NVramAddress2 : NVramAddress1),
+	.address_b(NVram_load ? NVtempAddress3 : ioctl_addr),	
 	.clock(clk_sys),
-	.data(~OUT1[1] ? NVDataOut2 : NVDataOut1),
-	.wren(sharedram ? ~OUT1[1] ? NVcs2 : NVcs1 : NVcs1),
-	.q(NVDataq)
+	.data_a(~OUT1[1] ? NVDataOut2 : NVDataOut1),
+	.data_b(NVram_load ? NVtempq : ioctl_dout),	
+	.wren_a(sharedram ? ~OUT1[1] ? NVcs2 : NVcs1 : NVcs1),
+	.wren_b((ioctl_download && ioctl_index==4 && ioctl_addr < 12'h800) || (NVram_load && NVtempAddress3 < 12'h800)),	
+	.q_a(NVDataq),
+	.q_b(NVram1q)	
 );
 
 // Super mario wants the ram to itself, so add another to make 2 instances work, have to turn off shared ram in osd  
-ram2k nvram2 (
-	.address(NVramAddress2),
+ram2kDP nvram2 (
+	.address_a(NVramAddress2),
+	.address_b(NVram_load ? NVtempAddress3 : ioctl_addr),	
 	.clock(clk_sys),
-	.data(NVDataOut2),
-	.wren(NVcs2),
-	.q(NVDataq2)
-);  
+	.data_a(NVDataOut2),
+	.data_b(NVram_load ? NVtempq : ioctl_dout),
+	.wren_a(NVcs2),
+	.wren_b((ioctl_download && ioctl_index==4 && ioctl_addr >= 12'h800) || (NVram_load && NVtempAddress3 >= 12'h800)),	
+	.q_a(NVDataq2),
+	.q_b(NVram2q)	
+);
+
+//save nvram on boot to load whenever later
+ram4k nvramtemp (
+	.address((ioctl_download && ioctl_index==4 && ioctl_addr < 13'h1000) ? ioctl_addr : NVtempAddress),
+	.clock(clk_sys),
+	.data(ioctl_dout),
+	.wren((ioctl_download && ioctl_index==4 && ioctl_addr < 13'h1000)),
+	.q(NVtempq)
+);
+
+wire nvram_save_trigger = status[21] | (status[22] & !oldOSD_STATUS & OSD_STATUS);
+wire nvram_load_trigger = status[23];
+
+reg NVram_save = 1'b0;
+reg oldOSD_STATUS = 0;
+always @(posedge clk_sys) begin
+	oldOSD_STATUS <= OSD_STATUS;
+	if (nvram_save_trigger) begin
+		NVram_save <= 1'b1;
+	end else if (ioctl_upload) begin
+		NVram_save <= 1'b0; // Clear the request
+	end	
+end
+
+reg NVram_load = 1'b0;
+always @(posedge clk_sys) begin
+	if (nvram_load_trigger) begin
+		NVram_load <= 1'b1;
+		NVtempAddress <= 12'h0;		  
+	end
+	 
+	if (NVram_load) begin
+		if (NVtempAddress < 13'h1000) begin
+			NVtempAddress <= NVtempAddress + 12'b1;
+			if (NVtempAddress == 12'hFFF) NVram_load <= 1'b0;
+		end
+	end
+	NVtempAddress2 <= NVtempAddress;
+	NVtempAddress3 <= NVtempAddress2;  	
+end
+
+assign ioctl_din = ioctl_addr[11] ? NVram2q : NVram1q;
+
 
 //////////////////////////////////////////////////////////////////
 //sdram
