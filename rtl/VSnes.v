@@ -20,7 +20,7 @@
 
 module nes_system (
 	input Clk,
-	//input Clk4x,	 
+	//input Clk4x,
 	input Reset,
 	output [23:0] VideoOut,
 	output [15:0] AudioOut,
@@ -31,7 +31,7 @@ module nes_system (
 	output HSync,
 	output PCLK,
 	
-	output [10:0]NVramAddress,	 
+	output [10:0]NVramAddress,
 	output [7:0]NVDataOut,
 	input [7:0]NVDataq,
 	output NVcs,
@@ -41,12 +41,12 @@ module nes_system (
 	
 	input [3:0]PALETTE,
 	input [3:0]PPUtype,
-	input [2:0]Mapper,	 
+	input [2:0]Mapper,
 	
 	input [7:0] dipsw,
 	
 	input [7:0] romreadCHR,
-	input [7:0] romreadPRG,	 
+	input [7:0] romreadPRG,
 	output PPU_nRD,
 	output CPU_nRD,
 	output [16:0] CPUAddr,
@@ -55,7 +55,7 @@ module nes_system (
 	output [2:0] OUT,
 	output [1:0] nIN,
 	input controller1_data,
-	input controller2_data, 
+	input controller2_data,
 	input service,
 	input coin1,
 	input coin2	
@@ -78,24 +78,24 @@ wire PPURnW;
 wire [7:0] cpuq;
 wire [7:0] ppuq;
 wire [7:0] CHRramq;
-reg [7:0] NV_DataOut;	 
+reg [7:0] NV_DataOut;
 reg [7:0] CPU_DataIn;
 reg [7:0] PPU_DataOut;
-wire [7:0] DBIN;	 
+wire [7:0] DBIN;
 wire DB_PAR;
 reg [7:0] cpuCSn;
 wire useCHRram;
 
 
 //*watchdog not implemented
-  
+
 ///////////////////////////////////////////////////////////////
 //ram 
 //MDST-21-13 HM6116 2k x 8bit Static RAM, 250ns (1E,6E)
 //MDST-21-14 MB8416-15 2k x 8bit Static CMOS RAM 150ns (8L)
 //MDST-21-15 TC5533P-A 4k x 8bit Static RAM (2C)
 //MDST-21-16 TC5533P-B 4k x 8bit Static RAM (8C)
- 
+
 //2kB RAM for CPU Work RAM () 1E,6E
 ram2k cpuram (
 	.address(CPU_AddressBus[10:0]),
@@ -103,7 +103,7 @@ ram2k cpuram (
 	.data(CPU_DataBus),
 	.wren(!cpuCSn[0] && !CPURnW),
 	.q(cpuq)
-); 
+);
 
 //4kB RAM for PPU Video RAM (VRAM) 2C,8C
 ram4k vram (
@@ -123,8 +123,8 @@ ram8k chrram (
 	.q(CHRramq)
 );
 
-///////////////////////////////////////////////////////////////	 
-  
+///////////////////////////////////////////////////////////////
+
 //CPU (RP2A03) 2J,8J 
 RP2A03 cpu1 (
 	.Clk(Clk),
@@ -144,7 +144,7 @@ RP2A03 cpu1 (
 	.TRIA(TRIA),
 	.DMC(DMC),
 	.OUT(OUT),
-	.nIN(nIN) //{nR4017, nR4016} 		  
+	.nIN(nIN) //{nR4017, nR4016}
 );
 
 //PPU (RP2C0?) 2F,8F
@@ -157,10 +157,10 @@ RP2C02 ppu1 (
 	.RnW(CPURnW),                             // External Pin Read/Write
 	.nDBE((cpuCSn[1] || !M2)),                // PPU access strobe
 	.PALETTE(PALETTE),                        // Palette selector
-	.PPUtype(PPUtype),
+	.PPUtype(PPUtype),                        // PPU Type
 	.A(CPU_AddressBus[2:0]),                  // Register address
 	.PD(PPU_DataBus),                         // PPU Graphics Data Bus Input
-	.DB(CPU_DataBus),                         // CPU External Data Bus		  
+	.DB(CPU_DataBus),                         // CPU External Data Bus
 	.PCLK(PCLK),                              // PIX Clock
 	.RGB(VideoOut),                           // RGB Video Output
 	.PAD(PPU_AddressBus),                     // PPU Address Bus
@@ -174,14 +174,14 @@ RP2C02 ppu1 (
 	.VS(VSync),
 	.HB(HBlank),
 	.VB(VBlank)
-);  
+);
 
 ///////////////////////////////////////////////////////////////
 //mappers
 Mappers mappers (
 	.Clk(Clk),
-	.Reset(Reset),	
-	.CPU_AddressBus(CPU_AddressBus),	
+	.Reset(Reset),
+	.CPU_AddressBus(CPU_AddressBus),
 	.CPU_DataBus(CPU_DataBus),
 	.PPU_AddressBus(PPU_AddressBus),
 	.BA(BA),
@@ -189,10 +189,10 @@ Mappers mappers (
 	.M2(M2),
 	.CPURnW(CPURnW),
 	.OUT(OUT),
-	.cpuCSn(cpuCSn),	
+	.cpuCSn(cpuCSn),
 	.CPUAddr(CPUAddr),
 	.PPUAddr(PPUAddr),
-	.useCHRram(useCHRram)    	
+	.useCHRram(useCHRram)
 );
 
 ///////////////////////////////////////////////////////////////
@@ -204,16 +204,16 @@ assign NVcs = !cpuCSn[3] && !M2 && !CPURnW;
 
 always @(posedge Clk) begin//Clked to get rid of latch
 	if ((!cpuCSn[3] || !M2) && !CPURnW) NV_DataOut <= CPU_DataBus;
-end  
+end
 
-/////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////
 //ppu 
 
 always @(*) begin
 	if (!PPU_nRD && PPU_AddressBus[13]) begin
 		PPU_DataBus = ppuq;
 	end else if (!PPU_nRD && !PPU_AddressBus[13]) begin
-		PPU_DataBus = useCHRram ? CHRramq : romreadCHR;		
+		PPU_DataBus = useCHRram ? CHRramq : romreadCHR;
 	end else 
 		PPU_DataBus = 8'hFF;//8'bz;
 end
@@ -228,15 +228,15 @@ end
 
 //74LS373 at 2E 
 reg [7:0] BA;
- 
+
 always @(posedge Clk) begin//Clked to get rid of latch
 	if (ALE) BA <= PPU_AddressBus[7:0];
-end  
+end
 
-/////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////
 //cpu
 
-assign CPU_nRD = ~(CPURnW && M2 && CPU_AddressBus[15]);  
+assign CPU_nRD = ~(CPURnW && M2 && CPU_AddressBus[15]);
 
 assign CPU_DataBus = CPURnW && cpuCSn[1] ? CPU_DataIn : 8'bz;//when nDBE(cpuCSn[1]) is low this lets ppu output data to the CPU_DataBus from DB
 
@@ -272,7 +272,7 @@ end
 
 assign nIRQ = IRQin;//(Mapper == 6) ? irq6 : IRQin;
 
-/////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////
 //audio
 
 wire [3:0] SQA;
@@ -329,7 +329,7 @@ assign tnd_table = '{
 	16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000,
 	16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000,
 	16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000,
-	16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000	 
+	16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000, 16'h0000
 };
 
 wire [4:0] pulse_index = SQA + SQB;
@@ -338,7 +338,6 @@ wire [7:0] tnd_index = (TRIA << 1) + TRIA + (RND << 1) + DMC;  // 3*TRIA + 2*RND
 wire [15:0] pulse_mix = pulse_table[pulse_index];
 wire [15:0] tnd_mix = tnd_table[tnd_index];
 
-assign AudioOut = pulse_mix + tnd_mix;  
-
+assign AudioOut = pulse_mix + tnd_mix;
 
 endmodule

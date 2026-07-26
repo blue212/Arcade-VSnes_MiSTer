@@ -4,7 +4,7 @@
 module Mappers (
 	input Clk,
 	input Reset,
-
+	
 	input [15:0] CPU_AddressBus,
 	input [7:0] CPU_DataBus,
 	input [13:0] PPU_AddressBus,
@@ -15,7 +15,7 @@ module Mappers (
 	input CPURnW,
 	input [2:0] OUT,
 	input [7:0] cpuCSn,	
-
+	
 	output reg [16:0] CPUAddr,
 	output reg [16:0] PPUAddr,
 	
@@ -23,59 +23,59 @@ module Mappers (
 );
 
 
-///////////////////////////////////////////////////////////////   
+///////////////////////////////////////////////////////////////
 //mappers
-  
+
 assign useCHRram = (Mapper == 4'd2);//only unrom uses CHRram
 
-//wire irq6;  
- 
+//wire irq6;
+
 wire [17:0] prg_addr1;
-wire [16:0] chr_addr1;	 
- 
+wire [16:0] chr_addr1;
+
 wire [16:0] prg_addr2;
-wire [16:0] chr_addr2;	 
- 
+wire [16:0] chr_addr2;
+
 wire [16:0] prg_addr3;
-wire [16:0] chr_addr3;	
- 
+wire [16:0] chr_addr3;
+
 reg [17:0] prg_addr4;
 reg [16:0] chr_addr4;
 
 wire [16:0] prg_addr5;
-wire [16:0] chr_addr5;		
+wire [16:0] chr_addr5;
 
 wire [18:0] prg_addr6;
 wire [16:0] chr_addr6;
 
 always @(*) begin
-	if (Mapper == 4'd1) begin//mmc1 
+	if (Mapper == 4'd1) begin//mmc1
 		CPUAddr = {1'b0,prg_addr1[15:0]};
-		PPUAddr = {2'b0,chr_addr1[14:0]};  
+		PPUAddr = {2'b0,chr_addr1[14:0]};
 	end else if (Mapper == 4'd2) begin//unrom
 		CPUAddr = {(UNROMq[2]|CPU_AddressBus[14]),(UNROMq[1]|CPU_AddressBus[14]),(UNROMq[0]|CPU_AddressBus[14]),CPU_AddressBus[13],CPU_AddressBus[12:0]};
-		PPUAddr = {4'b0,PPU_AddressBus[12:8], BA};		
+		PPUAddr = {4'b0,PPU_AddressBus[12:8], BA};
 	end else if (Mapper == 4'd3) begin//hack for gumshoe
 		CPUAddr = {(!cpuCSn[4] ? OUT[2] : 1'b0),CPU_AddressBus[15:0]} - 17'h8000;
-		PPUAddr = {3'b0,OUT[2],PPU_AddressBus[12:8], BA};		
+		PPUAddr = {3'b0,OUT[2],PPU_AddressBus[12:8], BA};
 	end else if (Mapper == 4'd4) begin//206
 		CPUAddr = prg_addr4[16:0];
 		PPUAddr = {1'b0,chr_addr4[15:0]};//64kb
 	end else if (Mapper == 4'd5) begin//vrc1
 		CPUAddr = prg_addr5[15:0];
-		PPUAddr = chr_addr5;	
+		PPUAddr = chr_addr5;
 	end else if (Mapper == 4'd6) begin//67
 		CPUAddr = prg_addr6[16:0];
-		PPUAddr = chr_addr6; 		
+		PPUAddr = chr_addr6;
 	end else begin// default to mapper 0 (nes mapper 99)
 		CPUAddr = {1'b0,CPU_AddressBus[15:0]} - 17'h8000;
-		PPUAddr = {3'b0,OUT[2],PPU_AddressBus[12:8], BA};		
-	end	 
-end  
+		PPUAddr = {3'b0,OUT[2],PPU_AddressBus[12:8], BA};
+	end
+end
 
 ///////////////////////////////////////////////////////////////
 //mapper 2 unrom - castlevania,Top Gun
-  
+
 //wire nROMSEL = ~(M2 && CPU_AddressBus[15]);   
 reg [2:0] UNROMq;
 
@@ -90,11 +90,11 @@ always @(posedge Clk) begin
 	if (!CPURnW && M2 && CPU_AddressBus[15]) begin
 		UNROMq <= CPU_DataBus[2:0];
 	end
-end  
+end
 
 ///////////////////////////////////////////////////////////////
 // mmc1
-   
+
 reg [4:0] shift_regm1;
 reg [2:0] shift_count1;
 
@@ -102,12 +102,12 @@ reg [4:0] control1;       // 8000–9FFF
 reg [4:0] chr_bank0_1;    // A000–BFFF
 reg [4:0] chr_bank1_1;    // C000–DFFF
 reg [4:0] prg_bank_1;     // E000–FFFF
- 
+
 reg enabledelay1;
- 
+
 always @(posedge Clk) begin
 	enabledelay1 <= write_enable1;
-end	
+end
 
 wire write_enable1 = !CPURnW && M2 && CPU_AddressBus[15];
 
@@ -123,7 +123,7 @@ always @(posedge Clk) begin
 		if (CPU_DataBus[7]) begin // reset to default
 			shift_regm1   <= 5'b10000;
 			shift_count1 <= 0;
-			control1[4:2] <= 3'b111; 
+			control1[4:2] <= 3'b111;
 		end else begin
 			shift_regm1 <= {CPU_DataBus[0], shift_regm1[4:1]};
 			shift_count1 <= shift_count1 + 1'b1;
@@ -151,14 +151,14 @@ always @(*) begin
 												 ({control1[3:2], CPU_AddressBus[14]} == 3'b110)  ? prg_bank_1[3:0] :
 																													 4'b1111;
 end
- 
+
 assign prg_addr1 = {prgsel1[2:0], CPU_AddressBus[13:0]};
- 
+
 assign chr_addr1 = (control1[4] == 0) ? // 8 KB mode
 							{chr_bank0_1[4:1], PPU_AddressBus[12:0]} :
-						 (PPU_AddressBus[12] == 0) ?
-								  {chr_bank0_1, PPU_AddressBus[11:0]} :
-								  {chr_bank1_1, PPU_AddressBus[11:0]};
+							(PPU_AddressBus[12] == 0) ?
+							{chr_bank0_1, PPU_AddressBus[11:0]} :
+							{chr_bank1_1, PPU_AddressBus[11:0]};
 
 /////////////////////////////////////////////////////////////// 
 //vrc1
@@ -172,16 +172,16 @@ reg [4:0] chr_bank_1000_5;
 
 //reg [1:0] mirroring5;
 
-always @(posedge Clk) begin 
+always @(posedge Clk) begin
 	if (!CPURnW && M2 && CPU_AddressBus[15]) begin
 		case (CPU_AddressBus[15:12])
 			4'h8: prg_bank_8000_5 <= CPU_DataBus[3:0];// 8000
 			//4'h9: {chr_bank_1000_5[4],chr_bank_0000_5[4],mirroring5[0]} <= CPU_DataBus[2:0];// 9000
-			4'h9: {chr_bank_1000_5[4],chr_bank_0000_5[4]} <= CPU_DataBus[2:1];// 9000					 
+			4'h9: {chr_bank_1000_5[4],chr_bank_0000_5[4]} <= CPU_DataBus[2:1];// 9000
 			4'hA: prg_bank_a000_5 <= CPU_DataBus[3:0];// A000
 			4'hC: prg_bank_c000_5 <= CPU_DataBus[3:0];// C000
-			4'hE: chr_bank_0000_5 <= CPU_DataBus[3:0];// E000	 
-			4'hF: chr_bank_1000_5 <= CPU_DataBus[3:0];// F000					 
+			4'hE: chr_bank_0000_5 <= CPU_DataBus[3:0];// E000
+			4'hF: chr_bank_1000_5 <= CPU_DataBus[3:0];// F000
 			default: ;
 		endcase
 	end
@@ -191,14 +191,14 @@ assign prg_addr5 = (CPU_AddressBus[15:13] == 3'b100) ? {prg_bank_8000_5, CPU_Add
 						 (CPU_AddressBus[15:13] == 3'b101) ? {prg_bank_a000_5, CPU_AddressBus[12:0]} :
 						 (CPU_AddressBus[15:13] == 3'b110) ? {prg_bank_c000_5, CPU_AddressBus[12:0]} :
 																					{4'b1111, CPU_AddressBus[12:0]};// fixed last bank
-					  
+
 assign chr_addr5 = (PPU_AddressBus[12]) ? {chr_bank_1000_5,  {PPU_AddressBus[11:8], BA}} :
 														{chr_bank_0000_5,  {PPU_AddressBus[11:8], BA}};
 
-/////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////
 //206
 
-reg [2:0] bank_select4 = 3'b000; 
+reg [2:0] bank_select4 = 3'b000;
 
 // PRG banks (8KB each, allowing 16 banks = 128KB)
 reg [3:0] prg_bank_8000_4;// 8000-9FFF (Bank 0)
@@ -217,9 +217,9 @@ reg [3:0] PRG_FIXED_C000 = 4'b1110; // C000-DFFF (Bank 14)
 reg [3:0] PRG_FIXED_E000 = 4'b1111; // E000-FFFF (Bank 15)
 
 
-// --- Write Logic (8000-FFFF) ---
+// Write Logic (8000-FFFF)
 always @(posedge Clk) begin
-	if (!CPURnW && M2 && CPU_AddressBus[15]) begin        
+	if (!CPURnW && M2 && CPU_AddressBus[15]) begin
 		if (CPU_AddressBus[15:13] == 3'b100) begin // 8000-9FFF
 			// Mapper 206 uses only 8000 and 8001 for register writes?
 			//if (CPU_AddressBus == 16'h8000) begin
@@ -231,7 +231,7 @@ always @(posedge Clk) begin
 				// Write to 8001: Writes data to the selected register
 				case (bank_select4)
 					3'b000: chr_2k_0000_4 <= CPU_DataBus[5:1];// R0: 2K bank for 0000
-					3'b001: chr_2k_0800_4 <= CPU_DataBus[5:1];// R1: 2K bank for 0800			  
+					3'b001: chr_2k_0800_4 <= CPU_DataBus[5:1];// R1: 2K bank for 0800
 					3'b010: chr_1k_1000_4 <= CPU_DataBus[5:0];// R2: 1K bank for 1000
 					3'b011: chr_1k_1400_4 <= CPU_DataBus[5:0];// R3: 1K bank for 1400
 					3'b100: chr_1k_1800_4 <= CPU_DataBus[5:0];// R4: 1K bank for 1800
@@ -260,7 +260,7 @@ always @(*) begin
 		3'b000: chr_addr4 = {chr_2k_0000_4, PPU_AddressBus[10:0]}; // 2K bank 0000-03FF
 		3'b001: chr_addr4 = {chr_2k_0000_4, PPU_AddressBus[10:0]}; //         0400-07FF
 		3'b010: chr_addr4 = {chr_2k_0800_4, PPU_AddressBus[10:0]}; // 2K bank 0800-0BFF
-		3'b011: chr_addr4 = {chr_2k_0800_4, PPU_AddressBus[10:0]}; //         0C00-0FFF		  
+		3'b011: chr_addr4 = {chr_2k_0800_4, PPU_AddressBus[10:0]}; //         0C00-0FFF
 		3'b100: chr_addr4 = {chr_1k_1000_4, PPU_AddressBus[9:0]};  // 1K bank 1000-13FF
 		3'b101: chr_addr4 = {chr_1k_1400_4, PPU_AddressBus[9:0]};  // 1K bank 1400-17FF
 		3'b110: chr_addr4 = {chr_1k_1800_4, PPU_AddressBus[9:0]};  // 1K bank 1800-1BFF
@@ -270,7 +270,7 @@ always @(*) begin
 end
 
 ///////////////////////////////////////////////////////////////
-//67  
+//67
 
 reg [4:0] prg_bank6;//(16 KB at 8000)
 
@@ -293,10 +293,10 @@ always @(posedge Clk) begin
 //			irq_counter <= irq_counter - 1'b1;
 //		end
 //	end	  
-	
+
 	if (!CPURnW && M2 && CPU_AddressBus[15]) begin
 		case (CPU_AddressBus & 16'hF800)
-			16'h8800: chr_bank_0000_6 <= CPU_DataBus[5:0]; 
+			16'h8800: chr_bank_0000_6 <= CPU_DataBus[5:0];
 			16'h9800: chr_bank_0800_6 <= CPU_DataBus[5:0];
 			16'hA800: chr_bank_1000_6 <= CPU_DataBus[5:0];
 			16'hB800: chr_bank_1800_6 <= CPU_DataBus[5:0];
@@ -324,7 +324,7 @@ assign chr_addr6 = (PPU_AddressBus[12:11] == 2'b00) ? {chr_bank_0000_6, {PPU_Add
 						 (PPU_AddressBus[12:11] == 2'b01) ? {chr_bank_0800_6, {PPU_AddressBus[10:8], BA}} :
 						 (PPU_AddressBus[12:11] == 2'b10) ? {chr_bank_1000_6, {PPU_AddressBus[10:8], BA}} :
 																		{chr_bank_1800_6, {PPU_AddressBus[10:8], BA}};
-																		
+
 //assign irq6 = irq_pending;
 
 endmodule

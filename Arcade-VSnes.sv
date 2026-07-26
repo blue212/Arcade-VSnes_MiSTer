@@ -214,27 +214,27 @@ localparam CONF_STR = {
 	"A.VSnes;;",
 	"-;",
 	"O[10],SNAC,Off,On;",
-	"O[14],Light Gun,No,Yes;",	
+	"O[14],Light Gun,No,Yes;",
 	"O[13],Swap Joysticks,No,Yes;",
 	"-;",
 	//"O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	//"O[2],TV Mode,NTSC,PAL;",	
 	//"O[5:3],Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-	"O[6],Palette Override,No,Yes;",	
+	"O[6],Palette Override,No,Yes;",
 	"h0O[9:7],Palette,2C02,2C03,2C04-0000,2C04-0001,2C04-0002,2C04-0003,2C04-0004,2C05-99;",
 	"O[12],Swap Screen,No,Yes;",
 	"O[15],System Type,Uni,Dual;",
 	"h1O[17:16],Split Screen,No,Vert,Horz;",
-	"h2O[11],Divider,No,Yes;",	
+	"h2O[11],Divider,No,Yes;",
 	"-;",
 	"O[18],Shared RAM,Yes,No;",
 	"O[20:19],Audio Mix,NES1,NES2,Both;",
-	"-;",	
-	"T[21],Save NVRAM;",
-	"R[23],Load NVRAM;",	
-	"O[22],Autosave,Off,On;",		
 	"-;",
-	"DIP;",	
+	"T[21],Save NVRAM;",
+	"R[23],Load NVRAM;",
+	"O[22],Autosave,Off,On;",
+	"-;",
+	"DIP;",
 	"-;",
 	"T[0],Reset;",
 	"R[0],Reset and close OSD;",
@@ -260,7 +260,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	.HPS_BUS(HPS_BUS),
 	.EXT_BUS(),
 	.gamma_bus(),
-
+	
 	.ioctl_download(ioctl_download),
 	.ioctl_addr(ioctl_addr),
 	.ioctl_wr(ioctl_wr),
@@ -269,17 +269,17 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	.ioctl_index(ioctl_index),
 	
    .ioctl_upload_req(NVram_save),
-   .ioctl_upload_index(4),//NVram_idx),
+   .ioctl_upload_index(4),
    .ioctl_upload(ioctl_upload),
    .ioctl_din(ioctl_din),
-
+	
 	.forced_scandoubler(forced_scandoubler),
-
+	
 	.joystick_0(joyA),
 	.joystick_1(joyB),
 	.joystick_2(joyC),
 	.joystick_3(joyD),
-
+	
 	.buttons(buttons),
 	.status(status),
 	.status_menumask({divide_status,status[15],status[6]}),
@@ -292,7 +292,7 @@ wire         ioctl_upload;
 wire [24:0]  ioctl_addr;
 wire         ioctl_wait;
 wire         ioctl_wr; 
-wire [15:0]  ioctl_index;  
+wire [15:0]  ioctl_index;
 wire [7:0]   ioctl_dout;
 wire [7:0]   ioctl_din;
 
@@ -313,13 +313,13 @@ pll pll
 wire reset = RESET | status[0] | buttons[1];
 
 reg  [26:0] act_cnt;
-always @(posedge clk_sys) act_cnt <= act_cnt + 1'd1; 
+always @(posedge clk_sys) act_cnt <= act_cnt + 1'd1;
 assign LED_USER    = act_cnt[26]  ? act_cnt[25:18]  > act_cnt[7:0]  : act_cnt[25:18]  <= act_cnt[7:0];
 
 //////////////////////////////////////////////////////////////////
 // Video
 wire [23:0] video_output,video_output2;// 24-bit RGB
-wire [15:0] audio_output,audio_output2;  
+wire [15:0] audio_output,audio_output2;
 
 wire [7:0] R1 = video_output[23:16];
 wire [7:0] G1 = video_output[15:8];
@@ -373,7 +373,7 @@ arcade_video#(256,24,0) arcade_video
 // NES System 1
 nes_system nes1 (
 	.Clk(clk_sys),
-	//.Clk4x(clk_mem),	 
+	//.Clk4x(clk_mem),
 	.Reset(reset),
 	.VideoOut(video_output),
 	.AudioOut(audio_output),
@@ -384,13 +384,13 @@ nes_system nes1 (
 	.HSync(hsync),
 	.PCLK(ce_pix),
 	
-	.NVramAddress(NVramAddress1),	 
+	.NVramAddress(NVramAddress1),
 	.NVDataOut(NVDataOut1),
 	.NVDataq(NVDataq),
 	.NVcs(NVcs1),
 	
 	.primary(1'b1),	 
-	.IRQin(OUT2[1]),	 
+	.IRQin(OUT2[1]),
 	
 	.PALETTE(PALETTE),
 	.PPUtype(PPUtype),
@@ -403,17 +403,17 @@ nes_system nes1 (
 	.PPU_nRD(PPU_nRD1),
 	.CPU_nRD(CPU_nRD1),
 	.CPUAddr(CPUAddr1),
-	.PPUAddr(PPUAddr1),	 
+	.PPUAddr(PPUAddr1),
 	
 	.OUT(OUT1),
 	.nIN(nIN1),
 	.controller1_data(joypad1_data | controller1_data1),
-	.controller2_data(joypad2_data | controller2_data1), 
+	.controller2_data(joypad2_data | controller2_data1),
 	.service(service1),
 	.coin1(coin1_1),
-	.coin2(coin2_1)    	
+	.coin2(coin2_1)
 );
- 
+
 //NES 2 
  nes_system nes2 (
 	.Clk(clk_sys),
@@ -428,13 +428,13 @@ nes_system nes1 (
 	.HSync(hsync2),
 	.PCLK(ce_pix2),
 	
-	.NVramAddress(NVramAddress2),	 
+	.NVramAddress(NVramAddress2),
 	.NVDataOut(NVDataOut2),
-	.NVDataq(sharedram ? NVDataq : NVDataq2),	 
+	.NVDataq(sharedram ? NVDataq : NVDataq2),
 	.NVcs(NVcs2),
 	
 	.primary(1'b0),	 
-	.IRQin(OUT1[1]),		 
+	.IRQin(OUT1[1]),
 	
 	.PALETTE(PALETTE2),
 	.PPUtype(PPUtype2),
@@ -447,7 +447,7 @@ nes_system nes1 (
 	.PPU_nRD(PPU_nRD2),
 	.CPU_nRD(CPU_nRD2),
 	.CPUAddr(CPUAddr2),
-	.PPUAddr(PPUAddr2),	 
+	.PPUAddr(PPUAddr2),
 	
 	.OUT(OUT2),
 	.nIN(nIN2),
@@ -455,14 +455,14 @@ nes_system nes1 (
 	.controller2_data(controller4_data2),
 	.service(service2),
 	.coin1(coin1_2),
-	.coin2(coin2_2)    	
+	.coin2(coin2_2)
 );  
- 
+
 ////////////////////////////////////////////////////////////////// 
 //palette  
-wire palOveride = status[6];
-wire [3:0] PALETTE  = palOveride ? {1'b0,status[9:7]} : Palette;
-wire [3:0] PALETTE2 = palOveride ? {1'b0,status[9:7]} : Palette2;
+wire palOverride = status[6];
+wire [3:0] PALETTE  = palOverride ? {1'b0,status[9:7]} : Palette;
+wire [3:0] PALETTE2 = palOverride ? {1'b0,status[9:7]} : Palette2;
 //0	2C02
 //1	2C03
 //2	2C04-0000
@@ -495,18 +495,18 @@ always @(posedge clk_sys) begin
 		Palette <= ioctl_dout[3:0];
 		PPUtype <= ioctl_dout[3:0];
 		Mapper  <= ioctl_dout[6:4];
-		REVcntl <= ioctl_dout[7]; 		
+		REVcntl <= ioctl_dout[7];
 	end
 	if(ioctl_wr && (ioctl_index==2)) begin
 		Palette2 <= ioctl_dout[3:0];
 		PPUtype2 <= ioctl_dout[3:0];
 		Mapper2  <= ioctl_dout[6:4];
-		REVcntl2 <= ioctl_dout[7]; 		
-	end	 
+		REVcntl2 <= ioctl_dout[7];
+	end	
 end
 
 //dips
-reg [7:0] dip_sw[8]; 
+reg [7:0] dip_sw[8];
 always @(posedge clk_sys) begin
     if(ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3])
         dip_sw[ioctl_addr[2:0]] <= ioctl_dout;
@@ -529,7 +529,7 @@ wire divide_status = dual && (vertical | horizontal);
 
 //Keyboard
 reg btn_up,btn_down,btn_left,btn_right,btn_a,btn_b;
-reg btn_coin1,btn_coin2,btn_coin3,btn_coin4,btn_service,btn_service2; 
+reg btn_coin1,btn_coin2,btn_coin3,btn_coin4,btn_service,btn_service2;
 reg btn_1p_start,btn_2p_start,btn_3p_start,btn_4p_start;
 
 wire pressed = ps2_key[9];
@@ -542,13 +542,13 @@ always @(posedge clk_sys) begin
 			'h16: btn_1p_start <= pressed; // 1
 			'h1E: btn_2p_start <= pressed; // 2
 			'h26: btn_3p_start <= pressed; // 3
-			'h25: btn_4p_start <= pressed; // 4				
+			'h25: btn_4p_start <= pressed; // 4
 			'h2E: btn_coin1    <= pressed; // 5
 			'h36: btn_coin2    <= pressed; // 6
 			'h3d: btn_coin3    <= pressed; // 7
-			'h3E: btn_coin4    <= pressed; // 8				
+			'h3E: btn_coin4    <= pressed; // 8
 			'h46: btn_service  <= pressed; // 9
-			'h45: btn_service2 <= pressed; // 0				
+			'h45: btn_service2 <= pressed; // 0
 			'h75: btn_up       <= pressed; // up
 			'h72: btn_down     <= pressed; // down
 			'h6B: btn_left     <= pressed; // left
@@ -563,21 +563,21 @@ end
 wire service1 = joyA[9] | joyB[9] | btn_service;
 wire coin1_1  = joyA[8] | btn_coin1;
 wire coin2_1  = joyB[8] | btn_coin2;
-//NES2	
+//NES2
 wire service2 = joyC[9] | joyD[9] | btn_service2;
 wire coin1_2  = joyC[8] | btn_coin3;
-wire coin2_2  = joyD[8] | btn_coin4; 
+wire coin2_2  = joyD[8] | btn_coin4;
 
-reg controller1_data1, controller2_data1, controller3_data2, controller4_data2; 
+reg controller1_data1, controller2_data1, controller3_data2, controller4_data2;
 reg [7:0] shift_reg1,shift_reg2,shift_reg3,shift_reg4;
 wire [2:0] OUT1,OUT2;
 wire [1:0] nIN1,nIN2; 
 reg [1:0]oldnIN1,oldnIN2;
 reg joypad1_data,joypad2_data;
- 
+
 //usb indexs - service,coin,start,select,B,A,u,d,l,r
 //A,B,1,3,u,d,l,r - order in shift register
- 
+
 //74LS165 at 6M, 6N, 7P, 8P 
 always @(posedge clk_sys) begin
 	if (OUT1[0]) begin
@@ -587,10 +587,10 @@ always @(posedge clk_sys) begin
 														 {(joyA[4]|btn_a),(joyA[5]|btn_b),(joyA[7]|btn_1p_start),joyA[6],(gunEN ? 1'b1 : (joyA[3]|btn_up)),(joyA[2]|btn_down),(gunEN ? Sensor : (joyA[1]|btn_left)),(gunEN ? Trigger : (joyA[0]|btn_right))};
 
 		shift_reg2 <= REVcntl  && joyswap  ? {joyB[4],joyB[5],(joyA[7]|btn_2p_start),joyA[6],joyB[3],joyB[2],joyB[1],joyB[0]} :
-					     REVcntl  && !joyswap ? {joyA[4],joyA[5],(joyB[7]|btn_2p_start),joyB[6],joyA[3],joyA[2],joyA[1],joyA[0]} :  
+					     REVcntl  && !joyswap ? {joyA[4],joyA[5],(joyB[7]|btn_2p_start),joyB[6],joyA[3],joyA[2],joyA[1],joyA[0]} :
 					     !REVcntl && joyswap  ? {joyA[4],joyA[5],(joyA[7]|btn_2p_start),joyA[6],joyA[3],joyA[2],joyA[1],joyA[0]} :
 														 {joyB[4],joyB[5],(joyB[7]|btn_2p_start),joyB[6],joyB[3],joyB[2],joyB[1],joyB[0]};
-	end 
+	end
 	if (OUT2[0]) begin
 		shift_reg3 <= REVcntl2  && joyswap  ? {joyC[4],joyC[5],(joyD[7]|btn_3p_start),joyD[6],joyC[3],joyC[2],joyC[1],joyC[0]} :
 						  REVcntl2  && !joyswap ? {joyD[4],joyD[5],(joyC[7]|btn_3p_start),joyC[6],joyD[3],joyD[2],joyD[1],joyD[0]} :
@@ -598,39 +598,39 @@ always @(posedge clk_sys) begin
 														  {joyC[4],joyC[5],(joyC[7]|btn_3p_start),joyC[6],joyC[3],joyC[2],joyC[1],joyC[0]};
 
 		shift_reg4 <= REVcntl2  && joyswap  ? {joyD[4],joyD[5],(joyC[7]|btn_4p_start),joyC[6],joyD[3],joyD[2],joyD[1],joyD[0]} :
-						  REVcntl2  && !joyswap ? {joyC[4],joyC[5],(joyD[7]|btn_4p_start),joyD[6],joyC[3],joyC[2],joyC[1],joyC[0]} :  
+						  REVcntl2  && !joyswap ? {joyC[4],joyC[5],(joyD[7]|btn_4p_start),joyD[6],joyC[3],joyC[2],joyC[1],joyC[0]} :
 						  !REVcntl2 && joyswap  ? {joyC[4],joyC[5],(joyC[7]|btn_4p_start),joyC[6],joyC[3],joyC[2],joyC[1],joyC[0]} :
 														  {joyD[4],joyD[5],(joyD[7]|btn_4p_start),joyD[6],joyD[3],joyD[2],joyD[1],joyD[0]};
-	end		
+	end
 	
 	if (oldnIN1[0] && !nIN1[0]) begin
 		shift_reg1 <= {shift_reg1[6:0], 1'b1};
 		controller1_data1 <= shift_reg1[7];
-	end 
-	if (oldnIN1[1] && !nIN1[1]) begin	
+	end
+	if (oldnIN1[1] && !nIN1[1]) begin
 		shift_reg2 <= {shift_reg2[6:0], 1'b1};
-		controller2_data1 <= shift_reg2[7];			
+		controller2_data1 <= shift_reg2[7];
 	end
 	
 	if (oldnIN2[0] && !nIN2[0]) begin
 		shift_reg3 <= {shift_reg3[6:0], 1'b1};
-		controller3_data2 <= shift_reg3[7];			
-	end 
+		controller3_data2 <= shift_reg3[7];
+	end
 	if (oldnIN2[1] && !nIN2[1]) begin	
 		shift_reg4 <= {shift_reg4[6:0], 1'b1};
-		controller4_data2 <= shift_reg4[7];			
-	end		
+		controller4_data2 <= shift_reg4[7];
+	end
 	oldnIN1 <= nIN1;
-	oldnIN2 <= nIN2;		
+	oldnIN2 <= nIN2;
 end 
 
-//zapper	
+//zapper
 //P1 Joystick Right - Zapper Trigger
 //P1 Joystick Left - Zapper Sensor
 //P1 Joystick Up - Ground on harness to disable alarm
 
 reg Sensor;
-reg Trigger; 
+reg Trigger;
 
 always_comb begin
 	if (snac) begin
@@ -638,13 +638,13 @@ always_comb begin
 		USER_OUT[1]   = (REVcntl ^ joyswap) ? nIN1[1] : nIN1[0];//Clk p1
 		USER_OUT[2]   = 1'b1;
 		USER_OUT[3]   = (REVcntl ^ joyswap) ? nIN1[0] : nIN1[1];//Clk p2
-		USER_OUT[6:4] = 3'b111;	 
-		joypad1_data = (REVcntl ^ joyswap) ? ~USER_IN[6] : ~USER_IN[5];//P1D0		 
+		USER_OUT[6:4] = 3'b111;
+		joypad1_data = (REVcntl ^ joyswap) ? ~USER_IN[6] : ~USER_IN[5];//P1D0
 		joypad2_data =  (REVcntl ^ joyswap) ? ~USER_IN[5] : ~USER_IN[6];//P2D0
 		Sensor = USER_IN[2];//D3
 		Trigger = ~USER_IN[4];//D4 
-	end else begin  
-		USER_OUT = '1;      
+	end else begin
+		USER_OUT = '1;
 		joypad1_data = 1'b0;
 		joypad2_data = 1'b0;
 		Sensor = 1'b0;
@@ -654,8 +654,8 @@ end
 
 //////////////////////////////////////////////////////////////////
 //NVram
- 
-wire [10:0]NVramAddress1,NVramAddress2;	 
+
+wire [10:0]NVramAddress1,NVramAddress2;
 wire [7:0]NVDataOut1,NVDataOut2;
 wire [7:0]NVDataq,NVDataq2;
 wire [7:0]NVram1q,NVram2q;
@@ -666,33 +666,33 @@ reg [11:0]NVtempAddress = 0;
 reg [11:0]NVtempAddress2 = 0;
 reg [11:0]NVtempAddress3 = 0;
 
-//74ls157 at 5j 5k 6j 6k - only primary nes controls the selector  
+//74ls157 at 5j 5k 6j 6k - only primary nes controls the selector
 //74ls245 3k 8k - simplified for now
 
 //2kB RAM for NVRAM () 8L - shared between both systems
 ram2kDP nvram (
 	.address_a(~OUT1[1] ? NVramAddress2 : NVramAddress1),
-	.address_b(NVram_load ? NVtempAddress3 : ioctl_addr),	
+	.address_b(NVram_load ? NVtempAddress3 : ioctl_addr),
 	.clock(clk_sys),
 	.data_a(~OUT1[1] ? NVDataOut2 : NVDataOut1),
 	.data_b(NVram_load ? NVtempq : ioctl_dout),	
 	.wren_a(sharedram ? ~OUT1[1] ? NVcs2 : NVcs1 : NVcs1),
-	.wren_b((ioctl_download && ioctl_index==4 && ioctl_addr < 12'h800) || (NVram_load && NVtempAddress3 < 12'h800)),	
+	.wren_b((ioctl_download && ioctl_index==4 && ioctl_addr < 12'h800) || (NVram_load && NVtempAddress3 < 12'h800)),
 	.q_a(NVDataq),
-	.q_b(NVram1q)	
+	.q_b(NVram1q)
 );
 
-// Super mario wants the ram to itself, so add another to make 2 instances work, have to turn off shared ram in osd  
+// Super mario wants the ram to itself, so add another to make 2 instances work, have to turn off shared ram in osd
 ram2kDP nvram2 (
 	.address_a(NVramAddress2),
-	.address_b(NVram_load ? NVtempAddress3 : ioctl_addr),	
+	.address_b(NVram_load ? NVtempAddress3 : ioctl_addr),
 	.clock(clk_sys),
 	.data_a(NVDataOut2),
 	.data_b(NVram_load ? NVtempq : ioctl_dout),
 	.wren_a(NVcs2),
-	.wren_b((ioctl_download && ioctl_index==4 && ioctl_addr >= 12'h800) || (NVram_load && NVtempAddress3 >= 12'h800)),	
+	.wren_b((ioctl_download && ioctl_index==4 && ioctl_addr >= 12'h800) || (NVram_load && NVtempAddress3 >= 12'h800)),
 	.q_a(NVDataq2),
-	.q_b(NVram2q)	
+	.q_b(NVram2q)
 );
 
 //save nvram on boot to load whenever later
@@ -722,9 +722,9 @@ reg NVram_load = 1'b0;
 always @(posedge clk_sys) begin
 	if (nvram_load_trigger) begin
 		NVram_load <= 1'b1;
-		NVtempAddress <= 12'h0;		  
+		NVtempAddress <= 12'h0;
 	end
-	 
+	
 	if (NVram_load) begin
 		if (NVtempAddress < 13'h1000) begin
 			NVtempAddress <= NVtempAddress + 12'b1;
@@ -732,7 +732,7 @@ always @(posedge clk_sys) begin
 		end
 	end
 	NVtempAddress2 <= NVtempAddress;
-	NVtempAddress3 <= NVtempAddress2;  	
+	NVtempAddress3 <= NVtempAddress2;
 end
 
 assign ioctl_din = ioctl_addr[11] ? NVram2q : NVram1q;
@@ -764,7 +764,7 @@ sdram sdram
 	.ch1_addr(0),//PPUAddr1 + 25'h20000),
 	.ch1_rd(0),//!PPU_nRD1),
 	.ch1_wr(0),	
-	.ch1_din(0),	
+	.ch1_din(0),
 	.ch1_dout(),//romreadCHR1),
 	.ch1_busy(),
 	
@@ -773,7 +773,7 @@ sdram sdram
 	.ch2_wr(0),	
 	.ch2_din(0),
 	.ch2_dout(romreadPRG2),
-	.ch2_busy(),	
+	.ch2_busy(),
 	
 	.ch3_addr(0),//PPUAddr2 + 25'h60000),
 	.ch3_rd(0),//!PPU_nRD2),
@@ -787,17 +787,17 @@ sdram sdram
 
 //  ram128k romPRG1
 //(
-//	.address(ioctl_download ? ioctl_addr : CPUAddr1),	
+//	.address(ioctl_download ? ioctl_addr : CPUAddr1),
 //	.clock(clk_sys),
 //	.data(ioctl_dout),
-//	.wren(ioctl_wr && ioctl_index==0 && ioctl_addr < 25'h20000 ),	
+//	.wren(ioctl_wr && ioctl_index==0 && ioctl_addr < 25'h20000 ),
 //	.q(romreadPRG1)
 //);
 
-  ram128k romCHR1
+ram128k romCHR1
 (
 	.address(ioctl_download ? (ioctl_addr - 25'h20000) : PPUAddr1),
-	.clock(clk_sys),	
+	.clock(clk_sys),
 	.data(ioctl_dout),
 	.wren(ioctl_wr && ioctl_index==0 && (ioctl_addr >= 25'h20000 && ioctl_addr < 25'h40000) ),
 	.q(romreadCHR1)
@@ -805,14 +805,14 @@ sdram sdram
 
 //  ram128k romPRG2
 //(
-//	.address(ioctl_download ? (ioctl_addr - 25'h40000) : CPUAddr2),	
+//	.address(ioctl_download ? (ioctl_addr - 25'h40000) : CPUAddr2),
 //	.clock(clk_sys),
 //	.data(ioctl_dout),
-//	.wren(ioctl_wr && ioctl_index==0 && (ioctl_addr >= 25'h40000 && ioctl_addr < 25'h60000) ),	
+//	.wren(ioctl_wr && ioctl_index==0 && (ioctl_addr >= 25'h40000 && ioctl_addr < 25'h60000) ),
 //	.q(romreadPRG2)
 //);
 
-  ram128k romCHR2
+ram128k romCHR2
 (
 	.address(ioctl_download ? (ioctl_addr - 25'h60000) : PPUAddr2),
 	.clock(clk_sys),
@@ -856,8 +856,8 @@ lineram lineram2 (
 	.rdaddress(cnt2),
 	.wraddress(offset2 + colorcnt2),
 	.wren(ce_pix2 && !hblank2 && !vblank2),
-	.q(fb_data2)  
-);	 
+	.q(fb_data2)
+);
 
 `ifdef MISTER_FB
 assign DDRAM_CLK       = clk_mem;
@@ -875,7 +875,7 @@ wire [7:0] RGBdata2 = (colorcnt2 == 0) ? RGBcap2[23:16] : (colorcnt2 == 1) ? RGB
 reg [23:0] RGBcap,RGBcap2;
 reg [1:0] colorcnt,colorcnt2;
 reg oddframe;
-	 
+
 reg [27:0] fb_addr,fb_addr2;
 wire [63:0] fb_data1,fb_data2;
 wire fb_req, fb_req2;
@@ -898,19 +898,19 @@ always @(posedge clk_mem) begin
 	oldhblank2 <= hblank2;
 	oldvblank <= vblank;
 end
-	 
+
 always @(posedge clk_mem) begin
 	if (reset) begin
 		offset1  <= 10'd0;
 		fb_addr <= 28'h0;
 		fb_req  <= 1'b0;
 		cnt <= 8'h0;
-		linecnt <= 9'h0;		
+		linecnt <= 9'h0;
 		colorcnt <= 2'd0;
 		active1 <= 1'b0;
 		oddframe <= 1'b0;
 	end else begin
-		if (!oldce_pix && ce_pix && !hblank && !vblank) begin           //rising edge of pixel clk, capture the RGB 
+		if (!oldce_pix && ce_pix && !hblank && !vblank) begin           //rising edge of pixel clk, capture the RGB
 			RGBcap  <= {R1,G1,B1};
 			if (divider && horizontal && screenswap && (offset1 == 0 || offset1 == 3)) RGBcap <= 24'h0;//insert black pixel for horz divider
 			if (divider && vertical && screenswap && (linecnt == 1 || linecnt == 2)) RGBcap <= 24'h0;//insert black pixel for vert divider
@@ -921,8 +921,8 @@ always @(posedge clk_mem) begin
 			colorcnt <= 2'd0;
 		end else if (hblank && !vblank) begin                           //transfer the line to ddram during hblank
 			offset1 <= 10'd0;
-			if (cnt != 8'd96 && !active2) active1 <= 1'b1;               //let either system transfer from ram to ddram without contention
-			else active1 <= 1'b0;					  
+			if (cnt != 8'd96 && !active2) active1 <= 1'b1;              //let either system transfer from ram to ddram without contention
+			else active1 <= 1'b0;
 			if (!fb_req && cnt < 8'd96 && !done && !DDRAM_BUSY && !active2) begin
 				fb_req  <= 1'b1;
 			//end else if (fb_req && fb_ready && cnt < 8'd96 && !done && !DDRAM_BUSY) begin
@@ -939,31 +939,31 @@ always @(posedge clk_mem) begin
 		end else if (vblank) begin                                      //reset everything for the next frame
 			if(!oldvblank) oddframe <= ~oddframe;
 			if (horizontal) fb_addr <= screenswap ? 28'd768 : 28'h0;
-			else fb_addr <= screenswap ? 28'd184320 : 28'h0 ;
+			else fb_addr <= screenswap ? 28'd184320 : 28'h0;            // for both vertical and no splitscreen
 			cnt <= 8'h0;
 			offset1 <= 10'd0;
-			linecnt <= 9'h0;			
+			linecnt <= 9'h0;
 			done <= 1'b1;
 		end
-	end	  
+	end
 end	 
-	 
+
 always @(posedge clk_mem) begin
 	if (reset) begin
 		offset2  <= 10'd0;
 		fb_addr2 <= 28'h0;
 		fb_req2  <= 1'b0;
 		cnt2 <= 8'h0;
-		linecnt2 <= 9'h0;		
+		linecnt2 <= 9'h0;
 		colorcnt2 <= 2'd0;
 		active2 <= 1'b0;
 	end else begin
-		if (!oldce_pix2 && ce_pix2 && !hblank2 && !vblank2) begin 
+		if (!oldce_pix2 && ce_pix2 && !hblank2 && !vblank2) begin
 			RGBcap2 <= {R2,G2,B2};
 			if (divider && horizontal && !screenswap && (offset2 == 0 || offset2 == 3)) RGBcap2 <= 24'h0;
-			if (divider && vertical && !screenswap && (linecnt2 == 1 || linecnt2 == 2)) RGBcap2 <= 24'h0;			
+			if (divider && vertical && !screenswap && (linecnt2 == 1 || linecnt2 == 2)) RGBcap2 <= 24'h0;
 		end else if (ce_pix2 && !hblank2 && !vblank2) begin
-			if (colorcnt2 < 2) colorcnt2 <= colorcnt2 + 2'b1;		  
+			if (colorcnt2 < 2) colorcnt2 <= colorcnt2 + 2'b1;
 		end else if (oldce_pix2 && !ce_pix2 && !hblank2 && !vblank2) begin
 			offset2 <= offset2 + 10'd3;
 			colorcnt2 <= 2'd0;
@@ -979,20 +979,20 @@ always @(posedge clk_mem) begin
 				fb_addr2 <= fb_addr2 + 8'd8;
 				cnt2 <= cnt2 + 8'd1;
 			end
-		end else if (oldhblank2 && !hblank2) begin 
+		end else if (oldhblank2 && !hblank2) begin
 			cnt2 <= 8'h0;
-			linecnt2 <= linecnt2 + 1'b1;			
+			linecnt2 <= linecnt2 + 1'b1;
 			if (horizontal && !done2) fb_addr2 <= fb_addr2 + 28'd768;
 			done2 <= 1'b0;
 		end else if (vblank2) begin
 			if (horizontal) fb_addr2 <= screenswap ? 28'h0 : 28'd768;
-			else fb_addr2 <= screenswap ? 28'h0 : 28'd184320;// for both vertical and no splitscreen
+			else fb_addr2 <= screenswap ? 28'h0 : 28'd184320;
 			cnt2 <= 8'h0;
-			linecnt2 <= 9'h0;			
+			linecnt2 <= 9'h0;
 			offset2 <= 10'd0;
 			done2 <= 1'b1;
-		end  
-	end	 
+		end
+	end
 end
 
 endmodule
