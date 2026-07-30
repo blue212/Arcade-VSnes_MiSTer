@@ -33,6 +33,7 @@ module ddram
 	output  [7:0] DDRAM_BE,
 	output        DDRAM_WE,
 	
+	// Channel 1
 	input  [27:0] ch1_addr,
 	output [63:0] ch1_dout,
 	input  [63:0] ch1_din,
@@ -40,16 +41,24 @@ module ddram
 	input         ch1_rnw,
 	output        ch1_ready,
 
+	// Channel 2
 	input  [27:0] ch2_addr,
 	output [63:0] ch2_dout,
 	input  [63:0] ch2_din,
 	input         ch2_req,
 	input         ch2_rnw,
-	output        ch2_ready	
+	output        ch2_ready,	
+	// Channel 3 (ADDED)
+	input  [27:0] ch3_addr,
+	output [63:0] ch3_dout,
+	input  [63:0] ch3_din,
+	input         ch3_req,
+	input         ch3_rnw,
+	output        ch3_ready	
 );
 
 reg  [7:0] ram_burst;
-reg [63:0] ram_q[2:1];
+reg [63:0] ram_q[3:1];
 reg [63:0] ram_data;
 reg [27:0] ram_address;
 reg        ram_read = 0;
@@ -71,14 +80,16 @@ assign ch1_ready = ready[1];
 assign ch2_dout  = ram_q[2];
 assign ch2_ready = ready[2];
 
+assign ch3_dout  = ram_q[3];
+assign ch3_ready = ready[3];
 reg        state  = 0;
 reg  [1:0] ch = 0; 
-reg  [2:1] ch_rq;
+reg  [3:1] ch_rq;
 
 always @(posedge DDRAM_CLK) begin
 
 
-	ch_rq <= ch_rq | {ch2_req, ch1_req};
+	ch_rq <= ch_rq | {ch3_req, ch2_req, ch1_req};
 	ready <= 0;
 
 	if(!DDRAM_BUSY) begin
@@ -111,6 +122,21 @@ always @(posedge DDRAM_CLK) begin
 					if (~ch2_rnw) begin
 						ram_write <= 1;
 						ready[2]  <= 1;
+					end else begin
+						ram_read  <= 1;
+						state     <= 1;
+					end
+				// ADDED: Channel 3
+				end else if (ch_rq[3] || ch3_req) begin
+					ch_rq[3]     <= 0;
+					ch           <= 3;
+					ram_data     <= ch3_din;
+					ram_be       <= 8'hFF;
+					ram_address  <= ch3_addr;
+					ram_burst    <= 'd1;
+					if (~ch3_rnw) begin
+						ram_write <= 1;
+						ready[3]  <= 1;
 					end else begin
 						ram_read  <= 1;
 						state     <= 1;

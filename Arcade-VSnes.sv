@@ -217,7 +217,7 @@ localparam CONF_STR = {
 	"O[14],Light Gun,No,Yes;",
 	"O[13],Swap Joysticks,No,Yes;",
 	"-;",
-	//"O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+	"O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	//"O[2],TV Mode,NTSC,PAL;",	
 	//"O[5:3],Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
 	"O[6],Palette Override,No,Yes;",
@@ -226,6 +226,7 @@ localparam CONF_STR = {
 	"O[15],System Type,Uni,Dual;",
 	"h1O[17:16],Split Screen,No,Vert,Horz;",
 	"h2O[11],Divider,No,Yes;",
+	"h3O[24],Keep Aspect Ratio,No,Yes;",	
 	"-;",
 	"O[18],Shared RAM,Yes,No;",
 	"O[20:19],Audio Mix,NES1,NES2,Both;",
@@ -268,10 +269,10 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	.ioctl_wait(ioctl_wait),
 	.ioctl_index(ioctl_index),
 	
-   .ioctl_upload_req(NVram_save),
-   .ioctl_upload_index(4),
-   .ioctl_upload(ioctl_upload),
-   .ioctl_din(ioctl_din),
+	.ioctl_upload_req(NVram_save),
+	.ioctl_upload_index(4),
+	.ioctl_upload(ioctl_upload),
+	.ioctl_din(ioctl_din),
 	
 	.forced_scandoubler(forced_scandoubler),
 	
@@ -282,7 +283,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	
 	.buttons(buttons),
 	.status(status),
-	.status_menumask({divide_status,status[15],status[6]}),
+	.status_menumask({keepAR_status,divide_status,status[15],status[6]}),
 	
 	.ps2_key(ps2_key)
 );
@@ -364,8 +365,7 @@ arcade_video#(256,24,0) arcade_video
 	.VSync((screenswap ^ dual) ? vsync2 : vsync),
 	.fx(status[5:3]),
 	.forced_scandoubler(1'b0)
-	//.gamma_bus(gamma_bus)
-	
+	//.gamma_bus(gamma_bus)	
 );
 
 
@@ -516,13 +516,15 @@ wire joyswap = status[13];
 wire snac = status[10];
 wire gunEN = status[14];
 wire dual = status[15];
-wire sharedram = ~status[18]; 
+wire sharedram = ~status[18];
 wire vertical = status[17:16] == 2'd1;
 wire horizontal = status[17:16] == 2'd2; 
 wire screenswap = status[12];//if system = Uni swap will show either nes1 or nes2 on both screens, if dual is active nes1 will be hdmi and nes2 will be vga. there's H and V switches, swap will then switch the position in FB and switch VGA
 wire [1:0] mixaudio = status[20:19];
 wire divider = status[11];
 wire divide_status = dual && (vertical | horizontal);
+wire keepAR = status[24];
+wire keepAR_status = dual && (vertical | horizontal);//use this for now
 
 //////////////////////////////////////////////////////////////////
 //controller section
@@ -616,7 +618,7 @@ always @(posedge clk_sys) begin
 		shift_reg3 <= {shift_reg3[6:0], 1'b1};
 		controller3_data2 <= shift_reg3[7];
 	end
-	if (oldnIN2[1] && !nIN2[1]) begin	
+	if (oldnIN2[1] && !nIN2[1]) begin
 		shift_reg4 <= {shift_reg4[6:0], 1'b1};
 		controller4_data2 <= shift_reg4[7];
 	end
@@ -666,8 +668,8 @@ reg [11:0]NVtempAddress = 0;
 reg [11:0]NVtempAddress2 = 0;
 reg [11:0]NVtempAddress3 = 0;
 
-//74ls157 at 5j 5k 6j 6k - only primary nes controls the selector
-//74ls245 3k 8k - simplified for now
+//74ls157 at 5J 5K 6J 6K - only primary nes controls the selector
+//74ls245 3K 8K - simplified for now
 
 //2kB RAM for NVRAM () 8L - shared between both systems
 ram2kDP nvram (
@@ -826,19 +828,26 @@ ram128k romCHR2
 
 ddram ddram(
 	.*,
-	.ch1_addr({fb_addr[27:20],oddframe,fb_addr[18:0]}),
+	.ch1_addr({fb_addr[27:21],oddframe,fb_addr[19:0]}),
 	.ch1_dout(),
 	.ch1_din(fb_data1),
 	.ch1_req(fb_req),
 	.ch1_rnw(1'b0),
 	.ch1_ready(fb_ready),
 	
-	.ch2_addr({fb_addr2[27:20],oddframe,fb_addr2[18:0]}),
+	.ch2_addr({fb_addr2[27:21],oddframe,fb_addr2[19:0]}),
 	.ch2_dout(),
 	.ch2_din(fb_data2),
 	.ch2_req(fb_req2),
 	.ch2_rnw(1'b0),
-	.ch2_ready(fb_ready2)
+	.ch2_ready(fb_ready2),
+	
+	.ch3_addr({fb_addr3[27:21], active_frame_bit, fb_addr3[19:0]}),
+	.ch3_dout(),
+	.ch3_din(fb_data3),
+	.ch3_req(fb_req3),
+	.ch3_rnw(1'b0),
+	.ch3_ready(fb_ready3)
 );
 
 lineram lineram1 (
@@ -862,9 +871,9 @@ lineram lineram2 (
 `ifdef MISTER_FB
 assign DDRAM_CLK       = clk_mem;
 assign FB_EN           = dual;
-assign FB_BASE         = oddframe ? 32'h30000000 : 32'h30080000;
-assign FB_WIDTH        = horizontal ? 12'd512 : 12'd256;
-assign FB_HEIGHT       = vertical ? 12'd480 : 12'd240;
+assign FB_BASE         = oddframe ? 32'h30000000 : 32'h30100000;
+assign FB_WIDTH        = (horizontal || (keepAR && vertical)) ? 12'd512 : 12'd256;
+assign FB_HEIGHT       = (vertical || (keepAR && horizontal)) ? 12'd480 : 12'd240;
 assign FB_FORMAT       = 5'b00101;
 assign FB_STRIDE       = 0;
 assign FB_FORCE_BLANK  = 0;
@@ -876,10 +885,10 @@ reg [23:0] RGBcap,RGBcap2;
 reg [1:0] colorcnt,colorcnt2;
 reg oddframe;
 
-reg [27:0] fb_addr,fb_addr2;
-wire [63:0] fb_data1,fb_data2;
-wire fb_req, fb_req2;
-wire fb_ready, fb_ready2;
+reg [27:0] fb_addr,fb_addr2,fb_addr3;
+wire [63:0] fb_data1,fb_data2,fb_data3;
+wire fb_req,fb_req2,fb_req3;
+wire fb_ready,fb_ready2,fb_ready3;
 
 reg [9:0] offset1,offset2;
 reg [7:0] cnt,cnt2;
@@ -935,18 +944,21 @@ always @(posedge clk_mem) begin
 			cnt <= 8'h0;
 			linecnt <= linecnt + 1'b1;
 			if (horizontal && !done) fb_addr <= fb_addr + 28'd768;
+			else if (vertical && keepAR && !done) fb_addr <= fb_addr + 28'd768;//256x3
 			done <= 1'b0;
 		end else if (vblank) begin                                      //reset everything for the next frame
 			if(!oldvblank) oddframe <= ~oddframe;
-			if (horizontal) fb_addr <= screenswap ? 28'd768 : 28'h0;
-			else fb_addr <= screenswap ? 28'd184320 : 28'h0;            // for both vertical and no splitscreen
+			if (horizontal && !keepAR) fb_addr <= screenswap ? 28'd768 : 28'd0;
+			else if (horizontal && keepAR) fb_addr <= screenswap ? 28'd185088 : 28'd184320;//240x512x3 and + 768
+			else if (vertical && keepAR) fb_addr <= screenswap ? 28'd369024 : 28'd384 ;// 512x240x3 + 128x3
+			else fb_addr <= screenswap ? 28'd184320 : 28'd0 ;
 			cnt <= 8'h0;
 			offset1 <= 10'd0;
 			linecnt <= 9'h0;
 			done <= 1'b1;
 		end
 	end
-end	 
+end
 
 always @(posedge clk_mem) begin
 	if (reset) begin
@@ -983,16 +995,155 @@ always @(posedge clk_mem) begin
 			cnt2 <= 8'h0;
 			linecnt2 <= linecnt2 + 1'b1;
 			if (horizontal && !done2) fb_addr2 <= fb_addr2 + 28'd768;
+			else if (vertical && keepAR && !done2) fb_addr2 <= fb_addr2 + 28'd768;//256x3			
 			done2 <= 1'b0;
 		end else if (vblank2) begin
-			if (horizontal) fb_addr2 <= screenswap ? 28'h0 : 28'd768;
-			else fb_addr2 <= screenswap ? 28'h0 : 28'd184320;
+			if (horizontal && !keepAR) fb_addr2 <= screenswap ? 28'd0 : 28'd768;
+			else if (horizontal && keepAR) fb_addr2 <= screenswap ? 28'd184320 : 28'd185088;//120x512x3 and + 768
+			else if (vertical && keepAR) fb_addr2 <= screenswap ? 28'd384 : 28'd369024 ;
+			else fb_addr2 <= screenswap ? 28'd0 : 28'd184320;// for both vertical and no splitscreen
 			cnt2 <= 8'h0;
 			linecnt2 <= 9'h0;
 			offset2 <= 10'd0;
 			done2 <= 1'b1;
 		end
 	end
+end
+
+/////////////////////////////////////////////
+//Fill the ram's unused area when splitscreen and keep AR is used, but only on the setting change
+
+wire active_frame_bit = (clear_state != S_IDLE) ? clear_frame : oddframe;// Use the state machine's locked frame bit while clearing, otherwise use the normal oddframe
+
+reg [2:0] clear_state = 0;
+localparam S_IDLE         = 3'd0;
+localparam S_HORIZ_TOP    = 3'd1;
+localparam S_HORIZ_BOTTOM = 3'd2;
+localparam S_VERT_LEFT    = 3'd3;
+localparam S_VERT_RIGHT   = 3'd4;
+localparam S_WAIT_END     = 3'd5;
+
+reg oldkeepAR = 0;
+reg oldhorizontal = 0;
+reg oldvertical = 0;
+
+reg [1:0] clear_passes = 2'd2; 
+reg clear_frame = 0; 
+reg [10:0] col_count = 0; //track X position (0 to 1535)
+
+always @(posedge clk_mem) begin
+	oldkeepAR      <= keepAR;
+	oldhorizontal <= horizontal;
+	oldvertical   <= vertical;
+	
+	if(reset) clear_passes <= 2'd2;
+	
+	if ((keepAR && !oldkeepAR && horizontal) || (keepAR && horizontal && !oldhorizontal) || // Reload the 2 passes if settings change
+	    (keepAR && !oldkeepAR && vertical)   || (keepAR && vertical && !oldvertical)) begin
+		clear_passes <= 2'd2;
+	end
+
+	case (clear_state)
+		S_IDLE: begin
+			if (vblank && keepAR && (horizontal || vertical) && (clear_passes > 0)) begin
+				fb_addr3    <= 28'd0;
+				col_count   <= 11'd0;
+				clear_frame <= (clear_passes == 2'd2) ? 1'b0 : 1'b1;
+				if (horizontal) begin
+					clear_state <= S_HORIZ_TOP;
+				end else begin
+					clear_state <= S_VERT_LEFT;
+				end
+			end else begin
+				fb_req3 <= 0;
+			end
+		end
+
+		// Horizontal clear
+		S_HORIZ_TOP: begin
+			fb_data3 <= 64'd0;
+			if (!vblank) begin
+				fb_req3 <= 0; 
+			end else if (fb_ready3) begin
+				fb_req3 <= 0;
+				if (fb_addr3[19:0] == 20'd184320) begin
+					fb_addr3[19:0] <= 20'd552960; 
+					clear_state    <= S_HORIZ_BOTTOM;
+				end else begin
+					fb_addr3 <= fb_addr3 + 1'b1;
+				end
+			end else begin
+				fb_req3 <= 1;
+			end
+		end
+
+		S_HORIZ_BOTTOM: begin
+			if (!vblank) begin
+				fb_req3 <= 0;
+			end else if (fb_ready3) begin
+				fb_req3 <= 0;
+				
+				if (fb_addr3[19:0] == 20'd737280) begin
+					clear_state <= S_WAIT_END; 
+				end else begin
+					fb_addr3 <= fb_addr3 + 1'b1;
+				end
+			end else begin
+				fb_req3 <= 1;
+			end
+		end
+
+		// Vertical clear
+		S_VERT_LEFT: begin
+			fb_data3 <= 64'd0;
+			if (!vblank) begin
+				fb_req3 <= 0;
+			end else if (fb_ready3) begin
+				fb_req3 <= 0;
+				if (col_count == 11'd383) begin // 383 is the final address of the 384-wide left margin
+					fb_addr3    <= fb_addr3 + 11'd769; // Skip the 768 active pixels, plus 1
+					col_count   <= 11'd1152; // 384 + 768
+					clear_state <= S_VERT_RIGHT;
+				end else begin
+					fb_addr3  <= fb_addr3 + 1'b1;
+					col_count <= col_count + 1'b1;
+				end
+			end else begin
+				fb_req3 <= 1;
+			end
+		end
+
+		S_VERT_RIGHT: begin
+			if (!vblank) begin
+				fb_req3 <= 0;
+			end else if (fb_ready3) begin
+				fb_req3 <= 0;
+				if (col_count == 11'd1535) begin // 1535 is the final address of the 384-wide right margin
+					if (fb_addr3[19:0] == 20'd737279) begin // Check if it hit the end of the final line (line 479)
+						clear_state <= S_WAIT_END;
+					end else begin
+						fb_addr3    <= fb_addr3 + 1'b1; // Advance to the next line
+						col_count   <= 11'd0; //reset the column tracker
+						clear_state <= S_VERT_LEFT;
+					end
+				end else begin
+					fb_addr3  <= fb_addr3 + 1'b1;
+					col_count <= col_count + 1'b1;
+				end
+			end else begin
+				fb_req3 <= 1;
+			end
+		end
+
+		// Finish
+		S_WAIT_END: begin
+			fb_req3 <= 0;
+			if (!vblank) begin
+				clear_passes <= clear_passes - 1'b1;
+				clear_state  <= S_IDLE;
+			end
+		end
+	endcase
 end
 
 endmodule
