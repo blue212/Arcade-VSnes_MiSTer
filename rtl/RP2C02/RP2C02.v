@@ -43,6 +43,7 @@ input RnW,               // External Pin Read/Write
 input nDBE,              // PPU access strobe
 input [3:0]PALETTE,      // Palette selector
 input [3:0]PPUtype,
+input palOverride,
 input [2:0]A,            // Register address
 input [7:0]PD,           // PPU Graphics Data Bus Input
 // Outputs
@@ -439,6 +440,7 @@ CGA[4:0],
 DBIN[5:0],
 EMPH[2:0],
 PALETTE[3:0],
+palOverride,
 RPIX,         
 PIX[5:0],
 RGB[23:0]
@@ -1629,10 +1631,11 @@ input [4:0]CGA,      // Graphics data bus
 input [5:0]DBIN,     // CPU data bus
 input [2:0]EMPH,     // Emphasis B,G,R
 input [3:0]PALETTE,  // added pal selector
+input palOverride,
 // Outputs
 output RPIX,         // Selecting pixel output
 output reg [5:0]PIX, // Pixel output data
-output [23:0]RGB     // RGB output
+output [23:0]RGB     // RGB output R8 + G8 + B8
 );
 // Variables
 reg DB_PARR;
@@ -1680,7 +1683,8 @@ always @(*) begin
         4'd4: RGB_IN[23:0] = RGB_IN_2C04_0002[23:0];
         4'd5: RGB_IN[23:0] = RGB_IN_2C04_0003[23:0];
         4'd6: RGB_IN[23:0] = RGB_IN_2C04_0004[23:0];
-        4'd7,4'd8,4'd9,4'd10,4'd11,4'd12,4'd13,4'd14,4'd15: RGB_IN = RGB_IN_2C05_99[23:0];//switch to pal 2c03?		  
+        4'd7: RGB_IN[23:0] = palOverride ? RGB_IN_2C05_99[23:0] : RGB_IN_2C03[23:0];//autodetect will use the right palette for 2c05 (2c03?) paloveride with use 2C05-99
+        4'd8,4'd9,4'd10,4'd11,4'd12,4'd13,4'd14,4'd15: RGB_IN[23:0] = RGB_IN_2C03[23:0];//unused
         default: RGB_IN[23:0] = RGB_IN_2C02[23:0];
     endcase
 end

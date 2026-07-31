@@ -42,6 +42,7 @@ module nes_system (
 	input [3:0]PALETTE,
 	input [3:0]PPUtype,
 	input [2:0]Mapper,
+	input palOverride,
 	
 	input [7:0] dipsw,
 	
@@ -158,6 +159,7 @@ RP2C02 ppu1 (
 	.nDBE((cpuCSn[1] || !M2)),                // PPU access strobe
 	.PALETTE(PALETTE),                        // Palette selector
 	.PPUtype(PPUtype),                        // PPU Type
+	.palOverride(palOverride),                // override the palette
 	.A(CPU_AddressBus[2:0]),                  // Register address
 	.PD(PPU_DataBus),                         // PPU Graphics Data Bus Input
 	.DB(CPU_DataBus),                         // CPU External Data Bus
@@ -226,7 +228,7 @@ always @(posedge Clk) begin//Clked to get rid of latch
 	end
 end 
 
-//74LS373 at 2E 
+//74LS373 at 2E, 8E
 reg [7:0] BA;
 
 always @(posedge Clk) begin//Clked to get rid of latch
@@ -255,7 +257,7 @@ always @(posedge Clk) begin//Clked to get rid of latch
 		CPU_DataIn <= {dipsw[7:2], 1'b0, controller2_data};
 end   
 
-//74LS138 at 1F
+//74LS138 at 1F, 6F
 always @(*) begin
 	case ({CPU_AddressBus[15], CPU_AddressBus[14], CPU_AddressBus[13]})
 		3'b000: cpuCSn = 8'b11111110;//0000-1FFF
@@ -281,6 +283,8 @@ wire [3:0] RND;
 wire [3:0] TRIA;
 wire [6:0] DMC;
 wire [5:0] SOUT;//unused
+
+//Temp mix
 
 //pulse_table [n] = 95.52 / (8128.0 / n + 100)
 //tnd_table [n] = 163.67 / (24329.0 / n + 100)

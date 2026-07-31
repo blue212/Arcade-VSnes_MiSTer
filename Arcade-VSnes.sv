@@ -395,6 +395,7 @@ nes_system nes1 (
 	.PALETTE(PALETTE),
 	.PPUtype(PPUtype),
 	.Mapper(Mapper),
+	.palOverride(palOverride),
 	
 	.dipsw(dip_sw[0]),
 	
@@ -439,6 +440,7 @@ nes_system nes1 (
 	.PALETTE(PALETTE2),
 	.PPUtype(PPUtype2),
 	.Mapper(Mapper2),
+	.palOverride(palOverride),
 	
 	.dipsw(dip_sw[1]),
 	
